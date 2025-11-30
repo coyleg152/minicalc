@@ -2,11 +2,12 @@
 #include <stdlib.h>
 #include "raylib.h"
 
-#define ASCII_ZERO 48
 #define NUM_BUTTONS 20
-#define DISPLAY_LEN 11
-#define DISPLAY_MAX 999999999
-#define DISPLAY_MIN -999999999
+#define DISPLAY_LEN 15
+#define DISPLAY_MAX 9999999999999
+#define DISPLAY_MIN -9999999999999
+
+typedef __int128 calc_int;
 
 typedef struct {
     char * label;
@@ -14,24 +15,24 @@ typedef struct {
     int y;
 } button;
 
-void set_display_num(char * display_num, int64_t num) {
+void set_display_num(char * display_num, calc_int num) {
     int i = 0;
     if (num < 0) {
         num *= -1;
         display_num[i] = '-';
         i++;
     }
-    int64_t power = 1;
+    calc_int power = 1;
     while (power * 10 <= num) power *= 10;
     while (power > 0) {
-        display_num[i] = (num / power) % 10 + ASCII_ZERO;
+        display_num[i] = (num / power) % 10 + '0';
         i++;
         power /= 10;
     }
     display_num[i] = '\0';
 }
 
-int64_t append_digit(int64_t active, int64_t digit) {
+calc_int append_digit(calc_int active, calc_int digit) {
     active *= 10;
     if (active < 0) {
         active -= digit;
@@ -44,8 +45,8 @@ int64_t append_digit(int64_t active, int64_t digit) {
     return active;
 }
 
-int64_t do_math(int64_t a, char op, int64_t b) {
-    int64_t result = a;
+calc_int do_math(calc_int a, char op, calc_int b) {
+    calc_int result = a;
     switch (op) {
         case '+':
             result += b;
@@ -74,7 +75,7 @@ int64_t do_math(int64_t a, char op, int64_t b) {
             if (b < 0) result = 0;
             else if (b == 0) result = 1;
             else {
-                for (int64_t i = b; i > 1; i--) {
+                for (calc_int i = b; i > 1; i--) {
                     result *= a;
                     if (result <= DISPLAY_MIN || result >= DISPLAY_MAX) {
                         if (a < 0 && b % 2 == 1) result = DISPLAY_MIN;
@@ -117,8 +118,8 @@ int main() {
         calc_buttons[i].y = B_SIZE * (i / 4 + 1) + PADDING_PX;
     }
 
-    int64_t active = 0;
-    int64_t memory = 0;
+    calc_int active = 0;
+    calc_int memory = 0;
     char operation = '+';
 
     char * display_num = malloc(DISPLAY_LEN * sizeof(char));
@@ -126,82 +127,82 @@ int main() {
 
     int mouse_x = 0;
     int mouse_y = 0;
+    int selected_button;
     Rectangle buffer = {0, 0, B_SIZE - PADDING_PX * 2, B_SIZE - PADDING_PX * 2};
 
     InitWindow(W_WIDTH, W_HEIGHT, "Minicalc");
-    SetTargetFPS(60);
+    SetTargetFPS(30);
 
     while (!WindowShouldClose()) {
         mouse_x = GetMouseX();
         mouse_y = GetMouseY();
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            char action = ' ';
-            for (int i = 0; i < NUM_BUTTONS; i++) {
-                if (mouse_x > calc_buttons[i].x && mouse_y > calc_buttons[i].y
-                && mouse_x < calc_buttons[i].x + B_SIZE - PADDING_PX * 2
-                && mouse_y < calc_buttons[i].y + B_SIZE - PADDING_PX * 2) {
-                    action = *(calc_buttons[i].label);
-                    break;
-                }
+        selected_button = -1;
+        for (int i = 0; i < NUM_BUTTONS; i++) {
+            if (mouse_x > calc_buttons[i].x && mouse_y > calc_buttons[i].y
+            && mouse_x < calc_buttons[i].x + B_SIZE - PADDING_PX * 2
+            && mouse_y < calc_buttons[i].y + B_SIZE - PADDING_PX * 2) {
+                selected_button = i;
+                break;
             }
-            if (action != ' ') {
-                switch (action) {
-                    case '0':
-                        active = append_digit(active, 0);
-                        break;
-                    case '1':
-                        active = append_digit(active, 1);
-                        break;
-                    case '2':
-                        active = append_digit(active, 2);
-                        break;
-                    case '3':
-                        active = append_digit(active, 3);
-                        break;
-                    case '4':
-                        active = append_digit(active, 4);
-                        break;
-                    case '5':
-                        active = append_digit(active, 5);
-                        break;
-                    case '6':
-                        active = append_digit(active, 6);
-                        break;
-                    case '7':
-                        active = append_digit(active, 7);
-                        break;
-                    case '8':
-                        active = append_digit(active, 8);
-                        break;
-                    case '9':
-                        active = append_digit(active, 9);
-                        break;
-                    case 'C':
-                        active = 0;
-                        memory = 0;
-                        operation = '+';
-                        break;
-                    case '<':
-                        active /= 10;
-                        break;
-                    case '~':
-                        active *= -1;
-                        break;
-                    case '=':
-                        active = do_math(memory, operation, active);
-                        memory = 0;
-                        operation = '+';
-                        break;
-                    default:
-                        // (+, -, *, /, %, ^)
-                        memory = do_math(memory, operation, active);
-                        active = 0;
-                        operation = action;
-                        break;
-                }
+        }
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && selected_button > -1) {
+            switch (*(calc_buttons[selected_button].label)) {
+            case '0':
+                active = append_digit(active, 0);
+                break;
+            case '1':
+                active = append_digit(active, 1);
+                break;
+            case '2':
+                active = append_digit(active, 2);
+                break;
+            case '3':
+                active = append_digit(active, 3);
+                break;
+            case '4':
+                active = append_digit(active, 4);
+                break;
+            case '5':
+                active = append_digit(active, 5);
+                break;
+            case '6':
+                active = append_digit(active, 6);
+                break;
+            case '7':
+                active = append_digit(active, 7);
+                break;
+            case '8':
+                active = append_digit(active, 8);
+                break;
+            case '9':
+                active = append_digit(active, 9);
+                break;
+            case 'C':
+                active = 0;
+                memory = 0;
+                operation = '+';
+                break;
+            case '<':
+                active /= 10;
+                break;
+            case '~':
+                active *= -1;
+                break;
+            case '=':
+                active = do_math(memory, operation, active);
+                memory = 0;
+                operation = '+';
+                break;
+            default:
+                // (+, -, *, /, %, ^)
+                memory = do_math(memory, operation, active);
+                active = 0;
+                operation = *(calc_buttons[selected_button].label);
+                break;
             }
             set_display_num(display_num, active);
         }
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) selected_button = -1;
 
         BeginDrawing();
         ClearBackground(BLACK);
@@ -210,9 +211,18 @@ int main() {
         for (int i = 0; i < NUM_BUTTONS; i++) {
             buffer.x = calc_buttons[i].x;
             buffer.y = calc_buttons[i].y;
-            DrawRectangleLinesEx(buffer, LINE_PX, WHITE);
-            DrawText(calc_buttons[i].label, calc_buttons[i].x + TEXT_OFFSET_X,
-            calc_buttons[i].y + TEXT_OFFSET_Y, FONT_PX, WHITE);
+            if (selected_button == i) {
+                DrawRectangleRec(buffer, WHITE);
+                DrawText(calc_buttons[i].label, calc_buttons[i].x
+                + TEXT_OFFSET_X, calc_buttons[i].y + TEXT_OFFSET_Y,
+                FONT_PX, BLACK);
+            }
+            else {
+                DrawRectangleLinesEx(buffer, LINE_PX, WHITE);
+                DrawText(calc_buttons[i].label, calc_buttons[i].x
+                + TEXT_OFFSET_X, calc_buttons[i].y + TEXT_OFFSET_Y,
+                FONT_PX, WHITE);
+            }
         }
         EndDrawing();
     }
