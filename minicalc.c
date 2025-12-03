@@ -13,6 +13,7 @@ typedef struct {
     char * label;
     int x;
     int y;
+    int keybind;
 } button;
 
 void set_display_num(char * display_num, calc_int num) {
@@ -111,11 +112,20 @@ int main() {
         "<", "0", "~", "="
     };
 
+    int keybinds[NUM_BUTTONS] = {
+        KEY_C,          KEY_E,      KEY_M,      KEY_SLASH,
+        KEY_SEVEN,      KEY_EIGHT,  KEY_NINE,   KEY_X,
+        KEY_FOUR,       KEY_FIVE,   KEY_SIX,    KEY_MINUS,
+        KEY_ONE,        KEY_TWO,    KEY_THREE,  KEY_EQUAL,
+        KEY_BACKSPACE,  KEY_ZERO,   KEY_GRAVE,  KEY_ENTER
+    };
+
     button * calc_buttons = malloc(NUM_BUTTONS * sizeof(button));
     for (int i = 0; i < NUM_BUTTONS; i++) {
         calc_buttons[i].label = labels[i];
         calc_buttons[i].x = B_SIZE * (i % 4) + PADDING_PX;
         calc_buttons[i].y = B_SIZE * (i / 4 + 1) + PADDING_PX;
+        calc_buttons[i].keybind = keybinds[i];
     }
 
     calc_int active = 0;
@@ -128,6 +138,7 @@ int main() {
     int mouse_x = 0;
     int mouse_y = 0;
     int selected_button;
+    char action;
     Rectangle buffer = {0, 0, B_SIZE - PADDING_PX * 2, B_SIZE - PADDING_PX * 2};
 
     InitWindow(W_WIDTH, W_HEIGHT, "Minicalc");
@@ -137,6 +148,7 @@ int main() {
         mouse_x = GetMouseX();
         mouse_y = GetMouseY();
         selected_button = -1;
+        action = 0;
         for (int i = 0; i < NUM_BUTTONS; i++) {
             if (mouse_x > calc_buttons[i].x && mouse_y > calc_buttons[i].y
             && mouse_x < calc_buttons[i].x + B_SIZE - PADDING_PX * 2
@@ -144,9 +156,16 @@ int main() {
                 selected_button = i;
                 break;
             }
+            if (IsKeyPressed(calc_buttons[i].keybind)) {
+                action = *(calc_buttons[i].label);
+                selected_button = i;
+                break;
+            }
         }
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && selected_button > -1) {
-            switch (*(calc_buttons[selected_button].label)) {
+        if ((IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || action != 0)
+        && selected_button > -1) {
+            if (action == 0) action = *(calc_buttons[selected_button].label);
+            switch (action) {
             case '0':
                 active = append_digit(active, 0);
                 break;
@@ -197,7 +216,7 @@ int main() {
                 // (+, -, *, /, %, ^)
                 memory = do_math(memory, operation, active);
                 active = 0;
-                operation = *(calc_buttons[selected_button].label);
+                operation = action;
                 break;
             }
             set_display_num(display_num, active);
