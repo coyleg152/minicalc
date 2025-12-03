@@ -150,20 +150,24 @@ int main() {
         selected_button = -1;
         action = 0;
         for (int i = 0; i < NUM_BUTTONS; i++) {
-            if (mouse_x > calc_buttons[i].x && mouse_y > calc_buttons[i].y
-            && mouse_x < calc_buttons[i].x + B_SIZE - PADDING_PX * 2
-            && mouse_y < calc_buttons[i].y + B_SIZE - PADDING_PX * 2) {
-                selected_button = i;
-                break;
-            }
             if (IsKeyPressed(calc_buttons[i].keybind)) {
                 action = *(calc_buttons[i].label);
                 selected_button = i;
                 break;
             }
         }
-        if ((IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || action != 0)
-        && selected_button > -1) {
+        if (action == 0) {
+            for (int i = 0; i < NUM_BUTTONS; i++) {
+                if (mouse_x > calc_buttons[i].x && mouse_y > calc_buttons[i].y
+                && mouse_x < calc_buttons[i].x + B_SIZE - PADDING_PX * 2
+                && mouse_y < calc_buttons[i].y + B_SIZE - PADDING_PX * 2) {
+                    selected_button = i;
+                    break;
+                }
+            }
+        }
+        if ((IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && selected_button > -1)
+        || action != 0) {
             if (action == 0) action = *(calc_buttons[selected_button].label);
             switch (action) {
             case '0':
