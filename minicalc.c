@@ -229,8 +229,15 @@ int main() {
 
         BeginDrawing();
         ClearBackground(BLACK);
-        DrawRectangleLinesEx(VIEWBOX, LINE_PX, WHITE);
-        DrawText(display_num, TEXT_OFFSET_X, TEXT_OFFSET_Y, FONT_PX, WHITE);
+        if (IsKeyPressed(KEY_LEFT_CONTROL)) {
+            SetClipboardText(display_num);
+            DrawRectangleRec(VIEWBOX, WHITE);
+            DrawText(display_num, TEXT_OFFSET_X, TEXT_OFFSET_Y, FONT_PX, BLACK);
+        }
+        else {
+            DrawRectangleLinesEx(VIEWBOX, LINE_PX, WHITE);
+            DrawText(display_num, TEXT_OFFSET_X, TEXT_OFFSET_Y, FONT_PX, WHITE);
+        }
         for (int i = 0; i < NUM_BUTTONS; i++) {
             buffer.x = calc_buttons[i].x;
             buffer.y = calc_buttons[i].y;
